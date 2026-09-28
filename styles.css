@@ -118,8 +118,14 @@ body {
 
 .app { width: 100%; max-width: 760px; }
 
-header { text-align: center; margin-bottom: var(--space-6); }
-header h1 { margin: 0 0 var(--space-1); font-size: var(--text-2xl); font-weight: 700; letter-spacing: -0.01em; }
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+header h1 { margin: 0; font-size: var(--text-2xl); font-weight: 700; letter-spacing: -0.01em; }
 
 .view.hidden { display: none; }
 .hidden { display: none !important; }
@@ -247,7 +253,6 @@ textarea:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 1p
   font-weight: 600;
   cursor: pointer;
 }
-.primary-btn:hover { background: var(--accent-hover); }
 .json-file-row {
   display: flex;
   align-items: center;
@@ -269,7 +274,6 @@ textarea:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 1p
   color: var(--text);
   cursor: pointer;
 }
-.secondary-btn:hover { background: var(--mask-bg); }
 
 /* ---------- 练习视图工具条 ---------- */
 .toolbar {
@@ -318,8 +322,6 @@ textarea:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 1p
   align-items: center;
   justify-content: center;
 }
-.icon-btn:hover { background: var(--mask-bg); }
-
 .icon-btn-group { display: flex; gap: var(--space-2); }
 
 .icon {
@@ -400,7 +402,6 @@ textarea:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 1p
   border-bottom: 2px dashed var(--mask-border);
   color: var(--muted);
 }
-.sentence.maskable:hover { background: var(--mask-bg-hover); }
 .sentence.peeked {
   background: var(--peek-bg);
   border-bottom: 2px solid var(--peek-border);
@@ -489,7 +490,6 @@ textarea:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 1p
   box-shadow: var(--shadow-md);
   z-index: 15;
 }
-.jump-btn:hover { background: var(--accent-hover); }
 
 /* ---------- 提示条 ---------- */
 .toast {
@@ -508,6 +508,18 @@ textarea:focus-visible { outline: 2px solid var(--accent-fg); outline-offset: 1p
   z-index: 40;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- hover 态只在真正有鼠标的设备上生效 ----------
+   触屏设备没有"移开鼠标"这个动作，:hover 常常会在点击/轻触后卡住不消失，
+   容易被误以为是别的状态（比如和 .peeked 的高亮混淆）。用 (hover: hover)
+   把这些悬浮态收窄到鼠标设备，手机/平板上直接跳过。 */
+@media (hover: hover) and (pointer: fine) {
+  .primary-btn:hover { background: var(--accent-hover); }
+  .secondary-btn:hover { background: var(--mask-bg); }
+  .icon-btn:hover { background: var(--mask-bg); }
+  .sentence.maskable:hover { background: var(--mask-bg-hover); }
+  .jump-btn:hover { background: var(--accent-hover); }
+}
 
 /* ================= Mobile ================= */
 @media (max-width: 640px) {
