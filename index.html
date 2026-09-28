@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>背稿练习</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>背稿练习</h1>
+      <p class="subtitle">纯本地静态工具 · 内容只保存在你自己的浏览器里，不会上传到任何地方</p>
+    </header>
+
+    <div id="editView" class="view">
+      <div class="segmented input-tabs">
+        <button class="input-tab-btn segmented-btn active" data-input-tab="text">手打文本</button>
+        <button class="input-tab-btn segmented-btn" data-input-tab="json">JSON 导入</button>
+      </div>
+
+      <div id="textPane" class="input-pane card">
+        <textarea id="textInput" placeholder="# 第一部分&#10;张三：大家好，欢迎参加今天的分享。&#10;我：谢谢张三，接下来我来讲一下项目进展。&#10;李四：补充一下背景信息……&#10;&#10;# 第二部分&#10;我：最后做一个总结。"></textarea>
+        <div id="textError" class="error-text hidden"></div>
+        <button id="startTextBtn" class="primary-btn">开始练习 →</button>
+        <p class="hint">格式：一行「# 标题」开启新分节；一行「角色名：内容」开启该角色的发言；不带前缀的行会续接上一句。同一句里如果本身带冒号，可能被误判成角色名——内容比较复杂建议改用「JSON 导入」。</p>
+      </div>
+
+      <div id="jsonPane" class="input-pane card hidden">
+        <textarea id="jsonInput" placeholder='粘贴 JSON 内容，或者点下面「选择文件」上传 .json 文件。&#10;&#10;格式大致是：{ "roles": [...], "sections": [{ "title": "第一部分", "segments": [{ "speaker": "张三", "text": "..." }] }] }'></textarea>
+        <div class="json-file-row">
+          <input type="file" id="jsonFile" accept="application/json,.json">
+          <button id="copySchemaBtn" class="secondary-btn" type="button">复制格式说明给 AI</button>
+        </div>
+        <div id="jsonError" class="error-text hidden"></div>
+        <button id="startJsonBtn" class="primary-btn">开始练习 →</button>
+        <p class="hint">可以把「复制格式说明给 AI」的内容粘给任何 AI，连同你的原始素材一起发给它，让它直接输出可以导入的 JSON。</p>
+      </div>
+    </div>
+
+    <div id="practiceView" class="view hidden">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div id="sectionTabs" class="segmented"></div>
+          <div class="segmented">
+            <button class="mode-btn segmented-btn active" data-mode="full">全文</button>
+            <button class="mode-btn segmented-btn" data-mode="cue">提示</button>
+            <button class="mode-btn segmented-btn" data-mode="hidden">隐藏</button>
+          </div>
+          <label class="only-mine-toggle">
+            <input type="checkbox" id="onlyMineToggle">
+            <span>只看我的部分</span>
+          </label>
+        </div>
+        <button id="settingsBtn" class="icon-btn" type="button" title="角色设置">⚙️</button>
+      </div>
+
+      <div id="mePrompt" class="me-prompt hidden">还没选择"哪些角色是你"——点右上角 ⚙️ 去设置，选完之后你的部分才会应用提示/隐藏练习模式。</div>
+
+      <div id="content" class="content card"></div>
+
+      <button id="jumpBtn" class="jump-btn hidden" type="button">↓ 下一句是我</button>
+    </div>
+
+    <div id="settingsBackdrop" class="settings-backdrop"></div>
+    <div id="settingsPanel" class="settings-panel">
+      <div class="settings-panel-header">
+        <h3>角色设置</h3>
+        <button id="settingsCloseBtn" class="icon-btn" type="button">×</button>
+      </div>
+      <p class="hint">选择哪些角色是你自己（可以多选——比如你同时念两个角色的词）。</p>
+      <div id="roleChips" class="role-chips"></div>
+      <hr>
+      <div class="settings-actions">
+        <button id="editBtn" class="secondary-btn" type="button">✏️ 编辑稿子</button>
+        <button id="exportBtn" class="secondary-btn" type="button">⬇️ 导出为 JSON</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+  </div>
+
+<script src="app.js"></script>
+</body>
+</html>
