@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light" data-theme-resolved="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,29 +10,31 @@
   <div class="app">
     <header>
       <h1>背稿练习</h1>
-      <p class="subtitle">纯本地静态工具 · 内容只保存在你自己的浏览器里，不会上传到任何地方</p>
     </header>
 
     <div id="editView" class="view">
       <div class="segmented input-tabs">
-        <button class="input-tab-btn segmented-btn active" data-input-tab="text">手打文本</button>
-        <button class="input-tab-btn segmented-btn" data-input-tab="json">JSON 导入</button>
+        <button class="input-tab-btn segmented-btn active" data-input-tab="text" aria-pressed="true">手打文本</button>
+        <button class="input-tab-btn segmented-btn" data-input-tab="json" aria-pressed="false">JSON 导入</button>
       </div>
 
       <div id="textPane" class="input-pane card">
+        <label class="field-label" for="textInput">稿子内容</label>
         <textarea id="textInput" placeholder="# 第一部分&#10;张三：大家好，欢迎参加今天的分享。&#10;我：谢谢张三，接下来我来讲一下项目进展。&#10;李四：补充一下背景信息……&#10;&#10;# 第二部分&#10;我：最后做一个总结。"></textarea>
-        <div id="textError" class="error-text hidden"></div>
+        <div id="textError" class="error-text hidden" role="alert"></div>
         <button id="startTextBtn" class="primary-btn">开始练习 →</button>
         <p class="hint">格式：一行「# 标题」开启新分节；一行「角色名：内容」开启该角色的发言；不带前缀的行会续接上一句。同一句里如果本身带冒号，可能被误判成角色名——内容比较复杂建议改用「JSON 导入」。</p>
       </div>
 
       <div id="jsonPane" class="input-pane card hidden">
+        <label class="field-label" for="jsonInput">JSON 内容</label>
         <textarea id="jsonInput" placeholder='粘贴 JSON 内容，或者点下面「选择文件」上传 .json 文件。&#10;&#10;格式大致是：{ "roles": [...], "sections": [{ "title": "第一部分", "segments": [{ "speaker": "张三", "text": "..." }] }] }'></textarea>
         <div class="json-file-row">
+          <label class="file-label" for="jsonFile">选择文件：</label>
           <input type="file" id="jsonFile" accept="application/json,.json">
           <button id="copySchemaBtn" class="secondary-btn" type="button">复制格式说明给 AI</button>
         </div>
-        <div id="jsonError" class="error-text hidden"></div>
+        <div id="jsonError" class="error-text hidden" role="alert"></div>
         <button id="startJsonBtn" class="primary-btn">开始练习 →</button>
         <p class="hint">可以把「复制格式说明给 AI」的内容粘给任何 AI，连同你的原始素材一起发给它，让它直接输出可以导入的 JSON。</p>
       </div>
@@ -40,44 +42,117 @@
 
     <div id="practiceView" class="view hidden">
       <div class="toolbar">
-        <div class="toolbar-left">
-          <div id="sectionTabs" class="segmented"></div>
-          <div class="segmented">
-            <button class="mode-btn segmented-btn active" data-mode="full">全文</button>
-            <button class="mode-btn segmented-btn" data-mode="cue">提示</button>
-            <button class="mode-btn segmented-btn" data-mode="hidden">隐藏</button>
-          </div>
-          <label class="only-mine-toggle">
-            <input type="checkbox" id="onlyMineToggle">
-            <span>只看我的部分</span>
-          </label>
+        <div class="toolbar-row">
+          <div id="sectionTabs" class="segmented segmented-quiet"></div>
         </div>
-        <button id="settingsBtn" class="icon-btn" type="button" title="角色设置">⚙️</button>
+        <div class="toolbar-row">
+          <div class="toolbar-controls">
+            <div class="segmented">
+              <button class="mode-btn segmented-btn active" data-mode="full" aria-pressed="true">全文</button>
+              <button class="mode-btn segmented-btn" data-mode="cue" aria-pressed="false">提示</button>
+              <button class="mode-btn segmented-btn" data-mode="hidden" aria-pressed="false">隐藏</button>
+            </div>
+            <label class="only-mine-toggle">
+              <input type="checkbox" id="onlyMineToggle">
+              <span>只看我的部分</span>
+            </label>
+          </div>
+          <div class="icon-btn-group">
+            <button id="themeBtn" class="icon-btn" type="button" title="当前：浅色" aria-label="主题：浅色，点击切换"></button>
+            <button id="settingsBtn" class="icon-btn" type="button" aria-label="角色设置">
+              <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                <circle cx="10" cy="10" r="6.3" fill="currentColor"/>
+                <g fill="currentColor">
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(45 10 10)"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(90 10 10)"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(135 10 10)"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(180 10 10)"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(225 10 10)"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(270 10 10)"/>
+                  <rect x="8.3" y="1.2" width="3.4" height="3.6" transform="rotate(315 10 10)"/>
+                </g>
+                <circle cx="10" cy="10" r="3.3" fill="var(--card)"/>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
       <div id="mePrompt" class="me-prompt hidden">还没选择"哪些角色是你"——点右上角 ⚙️ 去设置，选完之后你的部分才会应用提示/隐藏练习模式。</div>
 
       <div id="content" class="content card"></div>
 
-      <button id="jumpBtn" class="jump-btn hidden" type="button">↓ 下一句是我</button>
+      <button id="jumpBtn" class="jump-btn hidden" type="button">
+        <svg class="icon-sm" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+          <path d="M4 7l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        下一句是我
+      </button>
     </div>
 
     <div id="settingsBackdrop" class="settings-backdrop"></div>
     <div id="settingsPanel" class="settings-panel">
       <div class="settings-panel-header">
         <h3>角色设置</h3>
-        <button id="settingsCloseBtn" class="icon-btn" type="button">×</button>
+        <button id="settingsCloseBtn" class="icon-btn" type="button" aria-label="关闭设置面板">
+          <svg class="icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+            <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
       </div>
       <p class="hint">选择哪些角色是你自己（可以多选——比如你同时念两个角色的词）。</p>
       <div id="roleChips" class="role-chips"></div>
       <hr>
+      <div class="theme-field">
+        <p class="hint">主题</p>
+        <div class="segmented theme-segmented">
+          <button class="theme-seg-btn segmented-btn" data-theme="light" type="button" aria-pressed="true">
+            <svg class="icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+              <circle cx="10" cy="10" r="4" fill="currentColor"/>
+              <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+                <path d="M10 1.5v2.4M10 16.1v2.4M1.5 10h2.4M16.1 10h2.4"/>
+                <path d="M4.2 4.2l1.7 1.7M14.1 14.1l1.7 1.7M4.2 15.8l1.7-1.7M14.1 5.9l1.7-1.7"/>
+              </g>
+            </svg>
+            浅色
+          </button>
+          <button class="theme-seg-btn segmented-btn" data-theme="dark" type="button" aria-pressed="false">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"
+                d="M2,10 A8,8 0 1,0 18,10 A8,8 0 1,0 2,10 M7,8 A6,6 0 1,0 18.8,8 A6,6 0 1,0 7,8"/>
+            </svg>
+            深色
+          </button>
+          <button class="theme-seg-btn segmented-btn" data-theme="auto" type="button" aria-pressed="false">
+            <svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M10 2.5a7.5 7.5 0 0 1 0 15Z" fill="currentColor"/>
+            </svg>
+            自动
+          </button>
+        </div>
+      </div>
+      <hr>
       <div class="settings-actions">
-        <button id="editBtn" class="secondary-btn" type="button">✏️ 编辑稿子</button>
-        <button id="exportBtn" class="secondary-btn" type="button">⬇️ 导出为 JSON</button>
+        <button id="editBtn" class="secondary-btn" type="button">
+          <svg class="icon-sm" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" focusable="false">
+            <path d="M14.8 2.5a1.7 1.7 0 0 1 2.4 2.4l-1.3 1.3-2.4-2.4 1.3-1.3Z"/>
+            <path d="M12.7 4.6l2.4 2.4-8.6 8.6-3.2.8.8-3.2 8.6-8.6Z"/>
+          </svg>
+          编辑稿子
+        </button>
+        <button id="exportBtn" class="secondary-btn" type="button">
+          <svg class="icon-sm" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">
+            <path d="M10 2.5v9.5M6.5 8.5L10 12l3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3.5 14v2a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5v-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          导出为 JSON
+        </button>
       </div>
     </div>
 
-    <div id="toast" class="toast"></div>
+    <div id="toast" class="toast" aria-live="polite"></div>
   </div>
 
 <script src="app.js"></script>
