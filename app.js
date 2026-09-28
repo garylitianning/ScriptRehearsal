@@ -9,8 +9,26 @@
     onlyMine: 'scriptRehearsal.onlyMine',
     rawText: 'scriptRehearsal.rawText',
     rawJson: 'scriptRehearsal.rawJson',
-    inputMethod: 'scriptRehearsal.inputMethod'
+    inputMethod: 'scriptRehearsal.inputMethod',
+    theme: 'scriptRehearsal.theme'
   };
+
+  var THEME_CYCLE = ['light', 'dark', 'auto'];
+  var THEME_ICON_SVG = {
+    light: '<svg class="icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" focusable="false">' +
+      '<circle cx="10" cy="10" r="4" fill="currentColor"/>' +
+      '<g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">' +
+      '<path d="M10 1.5v2.4M10 16.1v2.4M1.5 10h2.4M16.1 10h2.4"/>' +
+      '<path d="M4.2 4.2l1.7 1.7M14.1 14.1l1.7 1.7M4.2 15.8l1.7-1.7M14.1 5.9l1.7-1.7"/>' +
+      '</g></svg>',
+    dark: '<svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">' +
+      '<path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" ' +
+      'd="M2,10 A8,8 0 1,0 18,10 A8,8 0 1,0 2,10 M7,8 A6,6 0 1,0 18.8,8 A6,6 0 1,0 7,8"/></svg>',
+    auto: '<svg class="icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">' +
+      '<circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+      '<path d="M10 2.5a7.5 7.5 0 0 1 0 15Z" fill="currentColor"/></svg>'
+  };
+  var THEME_LABELS = { light: '浅色', dark: '深色', auto: '跟随系统' };
 
   var state = {
     data: null,
@@ -20,10 +38,12 @@
     onlyMine: false,
     rawText: '',
     rawJson: '',
-    inputMethod: 'text'
+    inputMethod: 'text',
+    theme: 'light'
   };
 
   var el = {};
+  var themeMediaQuery = null;
 
   // ================= Persistence =================
 
@@ -42,6 +62,8 @@
     state.rawText = localStorage.getItem(KEYS.rawText) || '';
     state.rawJson = localStorage.getItem(KEYS.rawJson) || '';
     state.inputMethod = localStorage.getItem(KEYS.inputMethod) || 'text';
+    var storedTheme = localStorage.getItem(KEYS.theme);
+    state.theme = (THEME_CYCLE.indexOf(storedTheme) !== -1) ? storedTheme : 'light';
   }
 
   function saveData() { localStorage.setItem(KEYS.data, JSON.stringify(state.data)); }
@@ -52,6 +74,7 @@
   function saveRawText() { localStorage.setItem(KEYS.rawText, state.rawText); }
   function saveRawJson() { localStorage.setItem(KEYS.rawJson, state.rawJson); }
   function saveInputMethod() { localStorage.setItem(KEYS.inputMethod, state.inputMethod); }
+  function saveTheme() { localStorage.setItem(KEYS.theme, state.theme); }
 
   // ================= Utilities =================
 
@@ -65,7 +88,8 @@
   }
 
   function splitSentences(paragraph) {
-    var parts = paragraph.match(/[^。！？.!?]+[。！？.!?]?/g);
+    // 终止符后面紧跟的收尾括号/引号（）」』”’》〉)"' 算作上一句的尾巴，不单独成句
+    var parts = paragraph.match(/[^。！？.!?]+[。！？.!?]?[）」』”’》〉)"']*/g);
     if (!parts) return [paragraph];
     return parts.map(function (s) { return s.trim(); }).filter(Boolean);
   }
@@ -77,8 +101,7 @@
       var n = Math.max(2, Math.ceil(words.length * 0.3));
       return words.slice(0, n).join(' ') + ' …';
     }
-    var count = Math.max(3, Math.ceil(sentence.length * 0.25));
-    return sentence.slice(0, count) + '…';
+    return sentence.slice(0, 2) + '…';
   }
 
   function getHiddenPlaceholder(sentence) {
@@ -264,6 +287,7 @@
       splitSentences(seg.text).forEach(function (sentence) {
         var span = document.createElement('span');
         span.className = 'sentence';
+        span.dataset.full = sentence;
         applySentenceMode(span, sentence, state.mode);
         span.addEventListener('click', function () { toggleSentencePeek(span, sentence); });
         body.appendChild(span);
@@ -321,6 +345,7 @@
       var chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'role-chip' + (isMine(role) ? ' selected' : '');
+      chip.setAttribute('aria-pressed', String(isMine(role)));
       chip.textContent = role;
       chip.addEventListener('click', function () {
         var idx = state.me.indexOf(role);
@@ -333,9 +358,11 @@
   }
 
   function makeSegmentedTab(label, value, currentValue, onClick) {
+    var isActive = String(currentValue) === String(value);
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'segmented-btn' + (String(currentValue) === String(value) ? ' active' : '');
+    btn.className = 'segmented-btn' + (isActive ? ' active' : '');
+    btn.setAttribute('aria-pressed', String(isActive));
     btn.textContent = label;
     btn.addEventListener('click', function () { onClick(value); });
     return btn;
@@ -366,25 +393,81 @@
     el.jumpBtn.classList.toggle('hidden', !show);
   }
 
+  function revealSegment(segmentEl) {
+    var spans = segmentEl.querySelectorAll('.sentence.maskable');
+    spans.forEach(function (span) {
+      span.textContent = span.dataset.full;
+      span.classList.add('peeked');
+    });
+  }
+
   function jumpToNextMine() {
     var mineEls = Array.prototype.slice.call(el.content.querySelectorAll('[data-mine="1"]'));
     if (!mineEls.length) return;
     var threshold = window.scrollY + window.innerHeight * 0.4;
-    var target = null;
+    var targetIndex = -1;
     for (var i = 0; i < mineEls.length; i++) {
       if (mineEls[i].getBoundingClientRect().top + window.scrollY > threshold) {
-        target = mineEls[i];
+        targetIndex = i;
         break;
       }
     }
-    if (!target) target = mineEls[0];
-    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (targetIndex === -1) targetIndex = 0;
+
+    var currentIndex = (targetIndex - 1 + mineEls.length) % mineEls.length;
+    revealSegment(mineEls[currentIndex]);
+
+    mineEls[targetIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   function updateModeButtons() {
     el.modeButtons.forEach(function (b) {
-      b.classList.toggle('active', b.dataset.mode === state.mode);
+      var active = b.dataset.mode === state.mode;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
     });
+  }
+
+  // ================= Theme =================
+
+  function getSystemTheme() {
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+
+  function updateThemeUI() {
+    if (el.themeBtn) {
+      el.themeBtn.innerHTML = THEME_ICON_SVG[state.theme];
+      el.themeBtn.title = '当前：' + THEME_LABELS[state.theme];
+      el.themeBtn.setAttribute('aria-label', '主题：' + THEME_LABELS[state.theme] + '，点击切换');
+    }
+    if (el.themeSegmented) {
+      el.themeSegmented.forEach(function (btn) {
+        var active = btn.dataset.theme === state.theme;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      });
+    }
+  }
+
+  function ensureThemeMediaListener() {
+    if (!window.matchMedia) return;
+    if (themeMediaQuery) return;
+    themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    themeMediaQuery.addEventListener('change', function () {
+      if (state.theme === 'auto') {
+        document.documentElement.setAttribute('data-theme-resolved', getSystemTheme());
+      }
+    });
+  }
+
+  function applyTheme(preference) {
+    state.theme = (THEME_CYCLE.indexOf(preference) !== -1) ? preference : 'light';
+    saveTheme();
+    document.documentElement.setAttribute('data-theme', state.theme);
+    var resolved = state.theme === 'auto' ? getSystemTheme() : state.theme;
+    document.documentElement.setAttribute('data-theme-resolved', resolved);
+    updateThemeUI();
+    ensureThemeMediaListener();
   }
 
   // ================= View switching =================
@@ -411,7 +494,9 @@
     state.inputMethod = tab;
     saveInputMethod();
     el.inputTabButtons.forEach(function (b) {
-      b.classList.toggle('active', b.dataset.inputTab === tab);
+      var active = b.dataset.inputTab === tab;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-pressed', String(active));
     });
     el.textPane.classList.toggle('hidden', tab !== 'text');
     el.jsonPane.classList.toggle('hidden', tab !== 'json');
@@ -487,6 +572,9 @@
     el.content = document.getElementById('content');
     el.jumpBtn = document.getElementById('jumpBtn');
     el.toast = document.getElementById('toast');
+
+    el.themeBtn = document.getElementById('themeBtn');
+    el.themeSegmented = Array.prototype.slice.call(document.querySelectorAll('.theme-seg-btn'));
   }
 
   function bindEvents() {
@@ -611,6 +699,14 @@
     });
 
     el.jumpBtn.addEventListener('click', jumpToNextMine);
+
+    el.themeBtn.addEventListener('click', function () {
+      var idx = THEME_CYCLE.indexOf(state.theme);
+      applyTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
+    });
+    el.themeSegmented.forEach(function (btn) {
+      btn.addEventListener('click', function () { applyTheme(btn.dataset.theme); });
+    });
   }
 
   // 首次使用（本地还没有任何稿子）时，尝试读取项目文件夹里的 default.json 当默认稿子。
@@ -631,6 +727,7 @@
     cacheEls();
     loadState();
     bindEvents();
+    applyTheme(state.theme);
     if (state.data && state.data.sections && state.data.sections.length) {
       showPractice();
       return;
